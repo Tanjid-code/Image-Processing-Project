@@ -1,4 +1,4 @@
 streamlit
 opencv-python
-matplotlib
 numpy
+matplotlib
