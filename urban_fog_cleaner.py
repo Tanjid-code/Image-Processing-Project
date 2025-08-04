@@ -1,40 +1,7 @@
-import sys
-import subprocess
 import streamlit as st
-
-def check_and_install_dependencies():
-    """
-    Checks if required libraries are installed and installs them if they are not.
-    """
-    required_packages = ["opencv-python", "numpy", "Pillow"]
-    
-    # Check for each package
-    for package in required_packages:
-        try:
-            __import__(package.replace("-", "_")) # Import the package
-        except ImportError:
-            with st.spinner(f"Installing missing dependency: {package}... This may take a moment."):
-                try:
-                    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-                except subprocess.CalledProcessError as e:
-                    st.error(f"Failed to install {package}. Please install it manually using: pip install {package}")
-                    st.stop() # Stop the app if installation fails
-    st.experimental_rerun()
-
-
-# A simple way to trigger the check and installation
-if "cv2" not in sys.modules or "numpy" not in sys.modules or "PIL" not in sys.modules:
-    check_and_install_dependencies()
-
-# Now that we are sure the libraries are installed, we can import them
-try:
-    import cv2
-    import numpy as np
-    from PIL import Image
-except ImportError:
-    st.error("There was an issue importing necessary libraries. Please try rerunning the app.")
-    st.stop()
-
+import cv2
+import numpy as np
+from PIL import Image
 
 # Helper function to convert PIL Image to NumPy array (and BGR for OpenCV)
 def pil_to_cv(image):
