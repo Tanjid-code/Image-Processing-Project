@@ -69,7 +69,7 @@ def main():
         step3 = adaptive_smooth_sharpen(step2)
 
         ### === DISPLAY: Filters Applied Independently === ###
-        st.markdown("## 🎯 Individual Filters (Applied Separately on Original)")
+        st.markdown("## Individual Filters (Applied Separately on Original)")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original (512×512)", use_column_width=True)
@@ -82,7 +82,7 @@ def main():
 
         ### === DISPLAY: Full Enhancement Pipeline === ###
         st.markdown("---")
-        st.markdown("## 🔁 Step-by-Step Enhancement Pipeline")
+        st.markdown("## Step-by-Step Enhancement Pipeline")
         col5, col6, col7, col8 = st.columns(4)
         with col5:
             st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original", use_column_width=True)
@@ -93,10 +93,11 @@ def main():
         with col8:
             st.image(cv2.cvtColor(step3, cv2.COLOR_BGR2RGB), caption="Step 3: Sharpened Output", use_column_width=True)
 
-        st.success("✅ Enhancement complete. Visually compare each stage to the original.")
+        st.success(" Enhancement complete. Visually compare each stage to the original.")
 
     else:
         st.info("Upload a foggy or low-contrast urban image to begin.")
 
 if __name__ == "__main__":
     main()
+
