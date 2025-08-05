@@ -20,7 +20,7 @@ def frequency_domain_enhancement(image):
 
     rows, cols = gray.shape
     crow, ccol = rows // 2, cols // 2
-    radius = 20
+    radius = 60  # Increased for stronger filtering
 
     mask = np.ones((rows, cols), np.uint8)
     mask[crow - radius:crow + radius, ccol - radius:ccol + radius] = 0
@@ -32,18 +32,19 @@ def frequency_domain_enhancement(image):
     img_back = cv2.normalize(img_back, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
     return cv2.cvtColor(img_back, cv2.COLOR_GRAY2BGR)
 
-# Filter 2: Histogram Stretching
+# Filter 2: Histogram Stretching (CLAHE)
 def histogram_stretching(image):
     ycrcb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
     y, cr, cb = cv2.split(ycrcb)
-    y = cv2.normalize(y, None, 0, 255, cv2.NORM_MINMAX)
-    stretched = cv2.merge((y, cr, cb))
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    y_clahe = clahe.apply(y)
+    stretched = cv2.merge((y_clahe, cr, cb))
     return cv2.cvtColor(stretched, cv2.COLOR_YCrCb2BGR)
 
 # Filter 3: Adaptive Smoothing + Sharpening
 def adaptive_smooth_sharpen(image):
     smoothed = cv2.bilateralFilter(image, d=9, sigmaColor=75, sigmaSpace=75)
-    sharpened = cv2.addWeighted(image, 1.5, smoothed, -0.5, 0)
+    sharpened = cv2.addWeighted(image, 2.0, smoothed, -1.0, 0)  # Stronger sharpening
     return sharpened
 
 # Main App
@@ -67,32 +68,32 @@ def main():
         step2 = histogram_stretching(step1)
         step3 = adaptive_smooth_sharpen(step2)
 
-        ### === DISPLAY: Original + Filtered Separately === ###
-        st.markdown("## 🎯 Filter Effects Applied Separately on Original Image")
+        ### === DISPLAY: Filters Applied Independently === ###
+        st.markdown("## 🎯 Individual Filters (Applied Separately on Original)")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original (512×512)", use_column_width=True)
         with col2:
-            st.image(cv2.cvtColor(freq_only, cv2.COLOR_BGR2RGB), caption="Frequency Domain Only", use_column_width=True)
+            st.image(cv2.cvtColor(freq_only, cv2.COLOR_BGR2RGB), caption="Freq. Domain Only", use_column_width=True)
         with col3:
-            st.image(cv2.cvtColor(hist_only, cv2.COLOR_BGR2RGB), caption="Histogram Stretching Only", use_column_width=True)
+            st.image(cv2.cvtColor(hist_only, cv2.COLOR_BGR2RGB), caption="Histogram Stretch Only", use_column_width=True)
         with col4:
-            st.image(cv2.cvtColor(sharp_only, cv2.COLOR_BGR2RGB), caption="Adaptive Smoothing Only", use_column_width=True)
+            st.image(cv2.cvtColor(sharp_only, cv2.COLOR_BGR2RGB), caption="Smoothing + Sharpen Only", use_column_width=True)
 
-        ### === DISPLAY: Sequential Enhancement Steps === ###
+        ### === DISPLAY: Full Enhancement Pipeline === ###
         st.markdown("---")
         st.markdown("## 🔁 Step-by-Step Enhancement Pipeline")
         col5, col6, col7, col8 = st.columns(4)
         with col5:
             st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original", use_column_width=True)
         with col6:
-            st.image(cv2.cvtColor(step1, cv2.COLOR_BGR2RGB), caption="Step 1: Frequency Domain", use_column_width=True)
+            st.image(cv2.cvtColor(step1, cv2.COLOR_BGR2RGB), caption="Step 1: Frequency Enhancement", use_column_width=True)
         with col7:
             st.image(cv2.cvtColor(step2, cv2.COLOR_BGR2RGB), caption="Step 2: Histogram Stretching", use_column_width=True)
         with col8:
-            st.image(cv2.cvtColor(step3, cv2.COLOR_BGR2RGB), caption="Step 3: Smoothing + Sharpening", use_column_width=True)
+            st.image(cv2.cvtColor(step3, cv2.COLOR_BGR2RGB), caption="Step 3: Sharpened Output", use_column_width=True)
 
-        st.success("✅ Enhancement complete. You can now compare individual filter effects vs the combined pipeline.")
+        st.success("✅ Enhancement complete. Visually compare each stage to the original.")
 
     else:
         st.info("Upload a foggy or low-contrast urban image to begin.")
