@@ -44,33 +44,43 @@ def adaptive_smooth_sharpen(image):
 
 def main():
     st.set_page_config(layout="wide")
-    st.title("📸 Image Enhancement with 3-Step Pipeline")
+    st.title("🌁 Urban Fog Image Enhancement (3-Step Pipeline)")
 
-    uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Upload a foggy image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
         pil_img = Image.open(uploaded_file)
         original = pil_to_cv(pil_img)
 
-        # Step 1: Original
-        st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original Image", width=512)
-
-        # Step 2: Frequency Domain Enhancement
+        # Step 1: Frequency Domain Enhancement
         freq_img = frequency_domain_enhancement(original)
-        st.image(cv2.cvtColor(freq_img, cv2.COLOR_BGR2RGB), caption="Step 1: Frequency Domain Enhancement", width=512)
 
-        # Step 3: Histogram Stretching
+        # Step 2: Histogram Stretching
         hist_img = histogram_stretching(freq_img)
-        st.image(cv2.cvtColor(hist_img, cv2.COLOR_BGR2RGB), caption="Step 2: Histogram Stretching", width=512)
 
-        # Step 4: Adaptive Smoothing + Sharpening
+        # Step 3: Adaptive Smoothing and Sharpening
         final_img = adaptive_smooth_sharpen(hist_img)
-        st.image(cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB), caption="Step 3: Adaptive Smoothing + Sharpening", width=512)
 
-        st.success("✅ Enhancement completed!")
+        # Display all images at once
+        st.markdown("### 🖼️ Image Enhancement Results (Each Step)")
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original Image (512×512)", use_column_width=True)
+
+        with col2:
+            st.image(cv2.cvtColor(freq_img, cv2.COLOR_BGR2RGB), caption="Step 1: Frequency Domain Enhancement", use_column_width=True)
+
+        with col3:
+            st.image(cv2.cvtColor(hist_img, cv2.COLOR_BGR2RGB), caption="Step 2: Histogram Stretching", use_column_width=True)
+
+        with col4:
+            st.image(cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB), caption="Step 3: Adaptive Smoothing + Sharpening", use_column_width=True)
+
+        st.success("✅ Enhancement pipeline completed.")
 
     else:
-        st.info("Please upload an image to begin.")
+        st.info("📤 Please upload a foggy image to begin enhancement.")
 
 if __name__ == "__main__":
     main()
