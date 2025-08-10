@@ -20,7 +20,7 @@ def frequency_domain_enhancement(image):
 
     rows, cols = gray.shape
     crow, ccol = rows // 2, cols // 2
-    radius = 60  # Increased for stronger filtering
+    radius = 80  # Increased for stronger filtering
 
     mask = np.ones((rows, cols), np.uint8)
     mask[crow - radius:crow + radius, ccol - radius:ccol + radius] = 0
@@ -36,7 +36,7 @@ def frequency_domain_enhancement(image):
 def histogram_stretching(image):
     ycrcb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
     y, cr, cb = cv2.split(ycrcb)
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8, 8))
     y_clahe = clahe.apply(y)
     stretched = cv2.merge((y_clahe, cr, cb))
     return cv2.cvtColor(stretched, cv2.COLOR_YCrCb2BGR)
@@ -44,7 +44,7 @@ def histogram_stretching(image):
 # Filter 3: Adaptive Smoothing + Sharpening
 def adaptive_smooth_sharpen(image):
     smoothed = cv2.bilateralFilter(image, d=9, sigmaColor=75, sigmaSpace=75)
-    sharpened = cv2.addWeighted(image, 2.0, smoothed, -1.0, 0)  # Stronger sharpening
+    sharpened = cv2.addWeighted(image, 4.0, smoothed, -1.0, 0)  # Stronger sharpening
     return sharpened
 
 # Main App
@@ -100,4 +100,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
