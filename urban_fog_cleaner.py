@@ -20,7 +20,7 @@ def frequency_domain_enhancement(image):
 
     rows, cols = gray.shape
     crow, ccol = rows // 2, cols // 2
-    radius = 90  # Increased for stronger filtering
+    radius = 70  # Increased for stronger filtering
 
     mask = np.ones((rows, cols), np.uint8)
     mask[crow - radius:crow + radius, ccol - radius:ccol + radius] = 0
@@ -100,6 +100,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
