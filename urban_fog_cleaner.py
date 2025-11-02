@@ -63,10 +63,10 @@ def main():
         hist_only = histogram_stretching(original)
         sharp_only = adaptive_smooth_sharpen(original)
 
-        # Apply filters sequentially (pipeline)
-        step1 = frequency_domain_enhancement(original)
-        step2 = histogram_stretching(step1)
-        step3 = adaptive_smooth_sharpen(step2)
+        # Apply filters sequentially (modified pipeline)
+        step1 = histogram_stretching(original)
+        step2 = adaptive_smooth_sharpen(step1)
+        step3 = frequency_domain_enhancement(step2)  # Frequency filtering moved to last
 
         ### === DISPLAY: Filters Applied Independently === ###
         st.markdown("## Individual Filters (Applied Separately on Original)")
@@ -82,16 +82,16 @@ def main():
 
         ### === DISPLAY: Full Enhancement Pipeline === ###
         st.markdown("---")
-        st.markdown("## Step-by-Step Enhancement Pipeline")
+        st.markdown("## Step-by-Step Enhancement Pipeline (Reordered)")
         col5, col6, col7, col8 = st.columns(4)
         with col5:
             st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original", use_column_width=True)
         with col6:
-            st.image(cv2.cvtColor(step1, cv2.COLOR_BGR2RGB), caption="Step 1: Frequency Enhancement", use_column_width=True)
+            st.image(cv2.cvtColor(step1, cv2.COLOR_BGR2RGB), caption="Step 1: Histogram Stretching", use_column_width=True)
         with col7:
-            st.image(cv2.cvtColor(step2, cv2.COLOR_BGR2RGB), caption="Step 2: Histogram Stretching", use_column_width=True)
+            st.image(cv2.cvtColor(step2, cv2.COLOR_BGR2RGB), caption="Step 2: Sharpening", use_column_width=True)
         with col8:
-            st.image(cv2.cvtColor(step3, cv2.COLOR_BGR2RGB), caption="Step 3: Sharpened Output", use_column_width=True)
+            st.image(cv2.cvtColor(step3, cv2.COLOR_BGR2RGB), caption="Step 3: Frequency Enhancement", use_column_width=True)
 
         st.success(" Enhancement complete. Visually compare each stage to the original.")
 
@@ -100,7 +100,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
