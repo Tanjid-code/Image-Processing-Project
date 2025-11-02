@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import cv2
 from PIL import Image
+from io import BytesIO
 
 # Constants
 IMAGE_SIZE = (512, 512)
@@ -12,15 +13,23 @@ def pil_to_cv(image):
     cv_image = np.array(image)
     return cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
+# Utility: Convert OpenCV image to bytes for download
+def convert_to_bytes(image):
+    img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(img_rgb)
+    buf = BytesIO()
+    pil_img.save(buf, format="PNG")
+    byte_im = buf.getvalue()
+    return byte_im
+
 # Filter 1: Frequency Domain Enhancement
-def frequency_domain_enhancement(image):
+def frequency_domain_enhancement(image, radius=70):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     f = np.fft.fft2(gray)
     fshift = np.fft.fftshift(f)
 
     rows, cols = gray.shape
     crow, ccol = rows // 2, cols // 2
-    radius = 70  # Increased for stronger filtering
 
     mask = np.ones((rows, cols), np.uint8)
     mask[crow - radius:crow + radius, ccol - radius:ccol + radius] = 0
@@ -33,24 +42,24 @@ def frequency_domain_enhancement(image):
     return cv2.cvtColor(img_back, cv2.COLOR_GRAY2BGR)
 
 # Filter 2: Histogram Stretching (CLAHE)
-def histogram_stretching(image):
+def histogram_stretching(image, clip=4.0):
     ycrcb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
     y, cr, cb = cv2.split(ycrcb)
-    clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8, 8))
+    clahe = cv2.createCLAHE(clipLimit=clip, tileGridSize=(8, 8))
     y_clahe = clahe.apply(y)
     stretched = cv2.merge((y_clahe, cr, cb))
     return cv2.cvtColor(stretched, cv2.COLOR_YCrCb2BGR)
 
 # Filter 3: Adaptive Smoothing + Sharpening
-def adaptive_smooth_sharpen(image):
-    smoothed = cv2.bilateralFilter(image, d=9, sigmaColor=75, sigmaSpace=75)
-    sharpened = cv2.addWeighted(image, 2.0, smoothed, -1.0, 0)  # Stronger sharpening
+def adaptive_smooth_sharpen(image, sigma=75, strength=2.0):
+    smoothed = cv2.bilateralFilter(image, d=9, sigmaColor=sigma, sigmaSpace=sigma)
+    sharpened = cv2.addWeighted(image, strength, smoothed, -1.0, 0)
     return sharpened
 
 # Main App
 def main():
     st.set_page_config(layout="wide")
-    st.title("🌁 Urban Fog Cleaner – Image Enhancement with Filters")
+    st.title("🌁 Urban Fog Cleaner – Image Enhancement with Adjustable Filters")
 
     uploaded_file = st.file_uploader("📤 Upload a foggy or low-visibility urban image", type=["jpg", "jpeg", "png"])
 
@@ -58,21 +67,32 @@ def main():
         pil_img = Image.open(uploaded_file)
         original = pil_to_cv(pil_img)
 
-        # Apply all filters independently on original
-        freq_only = frequency_domain_enhancement(original)
-        hist_only = histogram_stretching(original)
-        sharp_only = adaptive_smooth_sharpen(original)
+        # === Sidebar Controls ===
+        st.sidebar.header("🧩 Filter Adjustment Controls")
 
-        # Apply filters sequentially (modified pipeline)
-        step1 = histogram_stretching(original)
-        step2 = adaptive_smooth_sharpen(step1)
-        step3 = frequency_domain_enhancement(step2)  # Frequency filtering moved to last
+        freq_radius = st.sidebar.slider("Frequency Filter Radius", 10, 150, 70)
+        clahe_clip = st.sidebar.slider("CLAHE Contrast (Clip Limit)", 1.0, 10.0, 4.0)
+        smooth_sigma = st.sidebar.slider("Smoothing Level (Sigma)", 10, 150, 75)
+        sharp_strength = st.sidebar.slider("Sharpen Strength", 0.5, 3.0, 2.0)
 
-        ### === DISPLAY: Filters Applied Independently === ###
+        st.sidebar.markdown("---")
+        st.sidebar.info("Adjust sliders to fine-tune the enhancement process.")
+
+        # Apply filters independently
+        freq_only = frequency_domain_enhancement(original, radius=freq_radius)
+        hist_only = histogram_stretching(original, clip=clahe_clip)
+        sharp_only = adaptive_smooth_sharpen(original, sigma=smooth_sigma, strength=sharp_strength)
+
+        # Sequential pipeline: Histogram → Sharpen → Frequency
+        step1 = histogram_stretching(original, clip=clahe_clip)
+        step2 = adaptive_smooth_sharpen(step1, sigma=smooth_sigma, strength=sharp_strength)
+        step3 = frequency_domain_enhancement(step2, radius=freq_radius)
+
+        ### === DISPLAY: Individual Filters === ###
         st.markdown("## Individual Filters (Applied Separately on Original)")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original (512×512)", use_column_width=True)
+            st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original", use_column_width=True)
         with col2:
             st.image(cv2.cvtColor(freq_only, cv2.COLOR_BGR2RGB), caption="Freq. Domain Only", use_column_width=True)
         with col3:
@@ -80,7 +100,7 @@ def main():
         with col4:
             st.image(cv2.cvtColor(sharp_only, cv2.COLOR_BGR2RGB), caption="Smoothing + Sharpen Only", use_column_width=True)
 
-        ### === DISPLAY: Full Enhancement Pipeline === ###
+        ### === DISPLAY: Enhancement Pipeline === ###
         st.markdown("---")
         st.markdown("## Step-by-Step Enhancement Pipeline (Reordered)")
         col5, col6, col7, col8 = st.columns(4)
@@ -93,7 +113,18 @@ def main():
         with col8:
             st.image(cv2.cvtColor(step3, cv2.COLOR_BGR2RGB), caption="Step 3: Frequency Enhancement", use_column_width=True)
 
-        st.success(" Enhancement complete. Visually compare each stage to the original.")
+        # === Download Enhanced Image ===
+        st.markdown("---")
+        st.markdown("### 💾 Download Final Enhanced Image")
+        final_bytes = convert_to_bytes(step3)
+        st.download_button(
+            label="⬇️ Download Enhanced Image",
+            data=final_bytes,
+            file_name="enhanced_image.png",
+            mime="image/png"
+        )
+
+        st.success(" Enhancement complete. You can now adjust filters or download the final output.")
 
     else:
         st.info("Upload a foggy or low-contrast urban image to begin.")
