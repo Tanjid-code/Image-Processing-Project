@@ -83,12 +83,12 @@ def main():
         hist_only = histogram_stretching(original, clip=clahe_clip)
         sharp_only = adaptive_smooth_sharpen(original, sigma=smooth_sigma, strength=sharp_strength)
 
-        # Sequential pipeline: Histogram → Sharpen → Frequency
-        step1 = histogram_stretching(original, clip=clahe_clip)
-        step2 = adaptive_smooth_sharpen(step1, sigma=smooth_sigma, strength=sharp_strength)
-        step3 = frequency_domain_enhancement(step2, radius=freq_radius)
+        # Sequential pipeline: Sharpen → Histogram → Frequency (reordered per request)
+        step1 = adaptive_smooth_sharpen(original, sigma=smooth_sigma, strength=sharp_strength)  # Step 1: Sharpening
+        step2 = histogram_stretching(step1, clip=clahe_clip)                                    # Step 2: Histogram Stretching
+        step3 = frequency_domain_enhancement(step2, radius=freq_radius)                         # Step 3: Frequency Enhancement
 
-        ### === DISPLAY: Individual Filters === ###
+        ### === DISPLAY: Individual Filters ===
         st.markdown("## Individual Filters (Applied Separately on Original)")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -100,16 +100,16 @@ def main():
         with col4:
             st.image(cv2.cvtColor(sharp_only, cv2.COLOR_BGR2RGB), caption="Smoothing + Sharpen Only", use_column_width=True)
 
-        ### === DISPLAY: Enhancement Pipeline === ###
+        ### === DISPLAY: Enhancement Pipeline ===
         st.markdown("---")
-        st.markdown("## Step-by-Step Enhancement Pipeline (Reordered)")
+        st.markdown("## Step-by-Step Enhancement Pipeline (Sharpen → Histogram → Frequency)")
         col5, col6, col7, col8 = st.columns(4)
         with col5:
             st.image(cv2.cvtColor(original, cv2.COLOR_BGR2RGB), caption="Original", use_column_width=True)
         with col6:
-            st.image(cv2.cvtColor(step1, cv2.COLOR_BGR2RGB), caption="Step 1: Histogram Stretching", use_column_width=True)
+            st.image(cv2.cvtColor(step1, cv2.COLOR_BGR2RGB), caption="Step 1: Sharpening", use_column_width=True)
         with col7:
-            st.image(cv2.cvtColor(step2, cv2.COLOR_BGR2RGB), caption="Step 2: Sharpening", use_column_width=True)
+            st.image(cv2.cvtColor(step2, cv2.COLOR_BGR2RGB), caption="Step 2: Histogram Stretching", use_column_width=True)
         with col8:
             st.image(cv2.cvtColor(step3, cv2.COLOR_BGR2RGB), caption="Step 3: Frequency Enhancement", use_column_width=True)
 
@@ -124,7 +124,7 @@ def main():
             mime="image/png"
         )
 
-        st.success(" Enhancement complete. You can now adjust filters or download the final output.")
+        st.success("Enhancement complete. You can now adjust filters or download the final output.")
 
     else:
         st.info("Upload a foggy or low-contrast urban image to begin.")
